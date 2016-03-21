@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -55,8 +56,13 @@ func createCallback(scope *Scope) {
 							blankColumnsWithDefaultValue = append(blankColumnsWithDefaultValue, field.DBName)
 							scope.InstanceSet("gorm:blank_columns_with_default_value", blankColumnsWithDefaultValue)
 						} else {
-							columns = append(columns, scope.Quote(field.DBName))
-							placeholders = append(placeholders, scope.AddToVars(field.Field.Interface()))
+							if field.Field.Kind() == reflect.String && field.Field.Interface() == "" {
+								columns = append(columns, scope.Quote(field.DBName))
+								placeholders = append(placeholders, "NULL")
+							} else {
+								columns = append(columns, scope.Quote(field.DBName))
+								placeholders = append(placeholders, scope.AddToVars(field.Field.Interface()))
+							}
 						}
 					}
 				} else if field.Relationship != nil && field.Relationship.Kind == "belongs_to" {
