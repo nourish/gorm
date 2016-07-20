@@ -53,7 +53,7 @@ func createCallback(scope *Scope) {
 				if field.IsNormal {
 					if !field.IsPrimaryKey || !field.IsBlank {
 						if field.IsBlank && field.HasDefaultValue {
-							blankColumnsWithDefaultValue = append(blankColumnsWithDefaultValue, field.DBName)
+							blankColumnsWithDefaultValue = append(blankColumnsWithDefaultValue, scope.Quote(field.DBName))
 							scope.InstanceSet("gorm:blank_columns_with_default_value", blankColumnsWithDefaultValue)
 						} else {
 							if field.Field.Kind() == reflect.String && field.Field.Interface() == "" {
@@ -135,7 +135,13 @@ func createCallback(scope *Scope) {
 // forceReloadAfterCreateCallback will reload columns that having default value, and set it back to current object
 func forceReloadAfterCreateCallback(scope *Scope) {
 	if blankColumnsWithDefaultValue, ok := scope.InstanceGet("gorm:blank_columns_with_default_value"); ok {
-		scope.DB().New().Select(blankColumnsWithDefaultValue.([]string)).First(scope.Value)
+		db := scope.DB().New().Table(scope.TableName()).Select(blankColumnsWithDefaultValue.([]string))
+		for _, field := range scope.Fields() {
+			if field.IsPrimaryKey && !field.IsBlank {
+				db = db.Where(fmt.Sprintf("%v = ?", field.DBName), field.Field.Interface())
+			}
+		}
+		db.Scan(scope.Value)
 	}
 }
 
