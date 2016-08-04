@@ -669,12 +669,7 @@ func (scope *Scope) whereSQL() (sql string) {
 
 	if !scope.PrimaryKeyZero() {
 		for _, field := range scope.PrimaryFields() {
-			var sql string
-			if field.Field.Kind() == reflect.Int64 {
-				sql = fmt.Sprintf("%v.%v = %v", quotedTableName, scope.Quote(field.DBName), scope.AddToVars(fmt.Sprintf("%d", field.Field.Interface())))
-			} else {
-				sql = fmt.Sprintf("%v.%v = %v", quotedTableName, scope.Quote(field.DBName), scope.AddToVars(field.Field.Interface()))
-			}
+			sql := fmt.Sprintf("%v.%v = %v", quotedTableName, scope.Quote(field.DBName), scope.AddToVars(field.Field.Interface()))
 			primaryConditions = append(primaryConditions, sql)
 		}
 	}
